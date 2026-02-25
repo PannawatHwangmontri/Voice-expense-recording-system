@@ -99,13 +99,14 @@ export default function DashboardPage() {
 
   // ─── Top Spending Items ──────────────────────────────────────
   const topItems = useMemo(() => {
-    const items: { description: string; category: string; amount: number }[] = [];
+    const items: { id: string; description: string; category: string; amount: number }[] = [];
 
     filtered
       .filter((tx) => tx.type === 'expense')
       .forEach((tx) => {
         tx.items.forEach((item) => {
           items.push({
+            id: `${item.description}-${item.category}-${item.amount}`,
             description: item.description,
             category: item.category,
             amount: item.amount,
@@ -114,7 +115,7 @@ export default function DashboardPage() {
       });
 
     return items
-      .sort((a, b) => b.amount - a.amount)
+      .toSorted((a, b) => b.amount - a.amount)
       .slice(0, 5);
   }, [filtered]);
 
@@ -256,7 +257,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {topItems.map((item, index) => (
                 <div
-                  key={index}
+                  key={item.id}
                   className="flex items-center gap-4 p-3 
                              bg-gray-50 dark:bg-gray-700/50 rounded-xl"
                 >
@@ -307,9 +308,9 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {filtered.map((tx, txIndex) => (
+              {filtered.map((tx) => (
                 <div
-                  key={txIndex}
+                  key={`${tx.timestamp}-${tx.type}-${tx.items.map(i => i.amount).join('-')}`}
                   className="border border-gray-100 dark:border-gray-700 
                              rounded-xl overflow-hidden"
                 >
@@ -336,8 +337,8 @@ export default function DashboardPage() {
 
                   {/* Items */}
                   <div className="px-4 py-2 space-y-1">
-                    {tx.items.map((item, itemIndex) => (
-                      <div key={itemIndex}
+                    {tx.items.map((item) => (
+                      <div key={`${item.description}-${item.category}-${item.amount}`}
                            className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <div
