@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { ParsedTransaction, ExpenseItem } from '@/types/expense';
 import { Check, X, Plus, Trash2 } from 'lucide-react';
-import { clsx } from 'clsx';
 
 interface ExpenseFormProps {
   transaction: ParsedTransaction;
@@ -14,12 +13,31 @@ interface ExpenseFormProps {
 
 const CATEGORIES = [
   'อาหาร', 'เครื่องดื่ม', 'เดินทาง', 'ช้อปปิ้ง',
-  'ความบันเทิง', 'สุขภาพ', 'การศึกษา', 'สาธารณูปโภค',
-  'รายรับ', 'เงินเดือน', 'อื่นๆ',
+  'บันเทิง', 'สุขภาพ', 'การศึกษา', 'สาธารณูปโภค',
+  'เงินเดือน', 'รายได้อื่น', 'อื่นๆ',
 ];
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '10px',
+  padding: '8px 12px',
+  color: '#f1f5f9',
+  fontSize: '13px',
+  outline: 'none',
+};
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  cursor: 'pointer',
+};
+
 export function ExpenseForm({ transaction, onConfirm, onCancel }: ExpenseFormProps) {
-  const [editedTx, setEditedTx] = useState<ParsedTransaction>(transaction);
+  const [editedTx, setEditedTx] = useState<ParsedTransaction>({
+    ...transaction,
+    items: transaction.items ?? [],
+  });
 
   const updateItem = (index: number, updates: Partial<ExpenseItem>) => {
     const newItems = [...editedTx.items];
@@ -28,161 +46,122 @@ export function ExpenseForm({ transaction, onConfirm, onCancel }: ExpenseFormPro
   };
 
   const removeItem = (index: number) => {
-    const newItems = editedTx.items.filter((_, i) => i !== index);
-    setEditedTx({ ...editedTx, items: newItems });
+    setEditedTx({ ...editedTx, items: editedTx.items.filter((_, i) => i !== index) });
   };
 
   const addItem = () => {
-    setEditedTx({
-      ...editedTx,
-      items: [
-        ...editedTx.items,
-        { description: '', category: 'อื่นๆ', amount: 0, merchant: null },
-      ],
-    });
+    setEditedTx({ ...editedTx, items: [...editedTx.items, { description: '', category: 'อื่นๆ', amount: 0, merchant: null }] });
   };
 
-  const totalAmount = editedTx.items.reduce((sum, item) => sum + item.amount, 0);
+  const totalAmount = (editedTx.items ?? []).reduce((s, i) => s + i.amount, 0);
+  const isIncome = editedTx.type === 'income';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border 
-                    border-gray-200 dark:border-gray-700 overflow-hidden">
-      
+    <div className="rounded-2xl overflow-hidden" style={{
+      background: 'rgba(17, 24, 39, 0.9)',
+      border: '1px solid rgba(255,255,255,0.1)',
+      boxShadow: isIncome
+        ? '0 0 30px rgba(16, 185, 129, 0.15)'
+        : '0 0 30px rgba(244, 63, 94, 0.15)',
+    }}>
       {/* Header */}
-      <div className={clsx(
-        'px-6 py-4 flex items-center justify-between',
-        editedTx.type === 'expense' 
-          ? 'bg-red-50 dark:bg-red-900/20' 
-          : 'bg-green-50 dark:bg-green-900/20'
-      )}>
+      <div className="px-5 py-4 flex items-center justify-between" style={{
+        background: isIncome ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
         <div>
-          <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">
-            {editedTx.type === 'expense' ? '💸 รายจ่าย' : '💰 รายรับ'}
+          <h3 className="font-bold" style={{ color: isIncome ? '#34d399' : '#fb7185' }}>
+            {isIncome ? '💰 รายรับ' : '💸 รายจ่าย'}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[240px]">
-            {transaction.originalText}
-          </p>
+          {transaction.originalText && (
+            <p className="text-xs mt-0.5 truncate max-w-[200px]" style={{ color: 'rgba(148,163,184,0.7)' }}>
+              &ldquo;{transaction.originalText}&rdquo;
+            </p>
+          )}
         </div>
         <div className="text-right">
-          <p className={clsx(
-            'text-2xl font-bold',
-            editedTx.type === 'expense' 
-              ? 'text-red-600 dark:text-red-400' 
-              : 'text-green-600 dark:text-green-400'
-          )}>
+          <p className="text-xl font-bold" style={{ color: isIncome ? '#34d399' : '#fb7185' }}>
             ฿{totalAmount.toLocaleString()}
           </p>
-          <p className="text-xs text-gray-400">รวมทั้งหมด</p>
+          <p className="text-xs" style={{ color: 'rgba(148,163,184,0.5)' }}>รวม</p>
         </div>
       </div>
 
       {/* Items */}
-      <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-        {editedTx.items.map((item, index) => (
-          <div
-            key={index}
-            className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl"
-          >
-            <div className="flex-1 space-y-2">
-              {/* Description */}
+      <div className="p-4 space-y-3 max-h-72 overflow-y-auto">
+        {(editedTx.items ?? []).map((item, index) => (
+          <div key={index} className="p-3 rounded-xl space-y-2"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={item.description}
                 onChange={(e) => updateItem(index, { description: e.target.value })}
                 placeholder="รายการ..."
-                className="w-full bg-white dark:bg-gray-700 border border-gray-200 
-                           dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ ...inputStyle, flex: 1 }}
               />
-              
-              <div className="flex gap-2">
-                {/* Category */}
-                <select
-                  value={item.category}
-                  onChange={(e) => updateItem(index, { category: e.target.value })}
-                  className="flex-1 bg-white dark:bg-gray-700 border border-gray-200 
-                             dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm
-                             focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                
-                {/* Amount */}
-                <input
-                  type="number"
-                  value={item.amount}
-                  onChange={(e) => updateItem(index, { amount: Number(e.target.value) })}
-                  className="w-24 bg-white dark:bg-gray-700 border border-gray-200 
-                             dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-right
-                             focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Merchant (optional) */}
+              <button
+                onClick={() => removeItem(index)}
+                disabled={editedTx.items.length === 1}
+                style={{ color: '#f43f5e', opacity: editedTx.items.length === 1 ? 0.3 : 1 }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={item.category}
+                onChange={(e) => updateItem(index, { category: e.target.value })}
+                style={{ ...selectStyle, flex: 1 }}
+              >
+                {CATEGORIES.map((cat) => <option key={cat} value={cat} style={{ background: '#111827' }}>{cat}</option>)}
+              </select>
               <input
-                type="text"
-                value={item.merchant || ''}
-                onChange={(e) => updateItem(index, { 
-                  merchant: e.target.value || null 
-                })}
-                placeholder="ร้าน/สถานที่ (ถ้ามี)"
-                className="w-full bg-white dark:bg-gray-700 border border-gray-200 
-                           dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="number"
+                value={item.amount}
+                onChange={(e) => updateItem(index, { amount: Number(e.target.value) })}
+                style={{ ...inputStyle, width: '90px', textAlign: 'right' }}
               />
             </div>
-            
-            {/* Remove Item */}
-            <button
-              onClick={() => removeItem(index)}
-              disabled={editedTx.items.length === 1}
-              className="self-start p-1.5 text-red-400 hover:text-red-600 
-                         disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
           </div>
         ))}
       </div>
 
-      {/* Add Item Button */}
-      <div className="px-4 pb-2">
+      {/* Add item button */}
+      <div className="px-4 pb-3">
         <button
           onClick={addItem}
-          className="w-full flex items-center justify-center gap-2 py-2 
-                     border-2 border-dashed border-gray-300 dark:border-gray-600
-                     rounded-xl text-gray-500 dark:text-gray-400
-                     hover:border-blue-400 hover:text-blue-500 transition-colors text-sm"
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs transition-all"
+          style={{
+            border: '1px dashed rgba(139, 92, 246, 0.3)',
+            color: '#a78bfa',
+            background: 'rgba(139, 92, 246, 0.05)',
+          }}
         >
-          <Plus className="w-4 h-4" />
-          เพิ่มรายการ
+          <Plus className="w-3.5 h-3.5" /> เพิ่มรายการ
         </button>
       </div>
 
-      {/* Action Buttons */}
-      <div className="p-4 flex gap-3 border-t border-gray-100 dark:border-gray-700">
+      {/* Actions */}
+      <div className="px-4 pb-4 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button
           onClick={onCancel}
-          className="flex-1 flex items-center justify-center gap-2 py-3 
-                     bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300
-                     rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600
-                     transition-colors font-medium"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all"
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
         >
-          <X className="w-4 h-4" />
-          ยกเลิก
+          <X className="w-4 h-4" /> ยกเลิก
         </button>
         <button
           onClick={() => onConfirm(editedTx)}
-          disabled={editedTx.items.length === 0 || editedTx.items.some(i => !i.description)}
-          className="flex-2 flex-1 flex items-center justify-center gap-2 py-3 
-                     bg-blue-600 hover:bg-blue-700 text-white
-                     rounded-xl transition-colors font-medium
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={(editedTx.items ?? []).length === 0 || (editedTx.items ?? []).some(i => !i.description)}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-white transition-all"
+          style={{
+            background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
+            boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)',
+            opacity: (editedTx.items ?? []).some(i => !i.description) ? 0.5 : 1,
+          }}
         >
-          <Check className="w-4 h-4" />
-          บันทึก ✅
+          <Check className="w-4 h-4" /> บันทึก
         </button>
       </div>
     </div>

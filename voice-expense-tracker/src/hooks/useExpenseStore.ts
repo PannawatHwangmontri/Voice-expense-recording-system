@@ -1,21 +1,25 @@
 // src/hooks/useExpenseStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ParsedTransaction, Status } from '@/types/expense';
+import { LedgerEntry, ParsedTransaction, Status } from '@/types/expense';
 
 interface ExpenseStore {
-  // State
+  // Voice recording state
   transactions: ParsedTransaction[];
   currentTransaction: ParsedTransaction | null;
   status: Status;
-  lastSavedId: string | null;
-  
+
+  // Ledger (ข้อมูลจาก n8n หรือ local)
+  ledger: LedgerEntry[];
+  localEntries: LedgerEntry[]; // persist ไว้ใน localStorage
+  isLoadingLedger: boolean;
+
   // Actions
   setCurrentTransaction: (tx: ParsedTransaction | null) => void;
   addTransaction: (tx: ParsedTransaction) => void;
-  removeLastTransaction: () => void;
   setStatus: (status: Status) => void;
-  setLastSavedId: (id: string) => void;
+  setLedger: (entries: LedgerEntry[]) => void;
+  setLoadingLedger: (loading: boolean) => void;
   clearAll: () => void;
 }
 
@@ -25,31 +29,53 @@ export const useExpenseStore = create<ExpenseStore>()(
       transactions: [],
       currentTransaction: null,
       status: 'idle',
-      lastSavedId: null,
+      ledger: [],
+      localEntries: [],
+      isLoadingLedger: false,
 
       setCurrentTransaction: (tx) => set({ currentTransaction: tx }),
-      
-      addTransaction: (tx) => set((state) => ({
-        transactions: [tx, ...state.transactions],
-        currentTransaction: null,
-      })),
-      
-      removeLastTransaction: () => set((state) => ({
-        transactions: state.transactions.slice(1),
-      })),
-      
+
+      addTransaction: (tx) =>
+        set((state) => {
+          // แปลง ParsedTransaction → LedgerEntry[] เพื่อ persist ไว้ด้วย
+          const newEntries: LedgerEntry[] = (tx.items ?? []).map((item, i) => ({
+            id: `local_${Date.now()}_${i}`,
+            date: tx.timestamp,
+            type: tx.type,
+            description: item.description,
+            category: item.category || 'อื่นๆ',
+            amount: item.amount,
+            note: item.merchant || '',
+          }));
+          return {
+            transactions: [tx, ...state.transactions],
+            localEntries: [...newEntries, ...state.localEntries],
+            currentTransaction: null,
+          };
+        }),
+
       setStatus: (status) => set({ status }),
-      
-      setLastSavedId: (id) => set({ lastSavedId: id }),
-      
-      clearAll: () => set({ 
-        transactions: [], 
-        currentTransaction: null,
-        status: 'idle',
-      }),
+
+      setLedger: (entries) => set({ ledger: entries }),
+
+      setLoadingLedger: (loading) => set({ isLoadingLedger: loading }),
+
+      clearAll: () =>
+        set({
+          transactions: [],
+          currentTransaction: null,
+          status: 'idle',
+          ledger: [],
+          localEntries: [],
+        }),
     }),
     {
-      name: 'expense-storage', // LocalStorage key
+      name: 'expense-storage',
+      // persist transactions + localEntries (แสดงตารางได้แม้ n8n GET ยังไม่พร้อม)
+      partialize: (state) => ({
+        transactions: state.transactions,
+        localEntries: state.localEntries,
+      }),
     }
   )
 );
