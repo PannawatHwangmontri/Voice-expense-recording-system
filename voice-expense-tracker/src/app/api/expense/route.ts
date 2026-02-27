@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const N8N_POST_URL = process.env.N8N_WEBHOOK_URL!;
 const N8N_GET_URL = process.env.N8N_GET_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL!;
+const N8N_DELETE_URL = process.env.N8N_DELETE_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL!;
 
 // POST — ส่งข้อมูลเสียงไปให้ n8n ประมวลผลและบันทึก
 export async function POST(request: NextRequest) {
@@ -95,5 +96,35 @@ export async function GET() {
   } catch (error) {
     console.warn('[GET] Error:', (error as Error).message);
     return NextResponse.json({ success: true, data: [] });
+  }
+}
+
+// DELETE — ลบรายการจาก Google Sheets ผ่าน n8n
+export async function DELETE(request: NextRequest) {
+  try {
+    const { id } = await request.json();
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'ไม่ระบุ ID รายการที่จะลบ' }, { status: 400 });
+    }
+
+    console.log('[DELETE] Deleting entry:', id);
+
+    const n8nResponse = await fetch(N8N_DELETE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+
+    const text = await n8nResponse.text();
+    console.log('[DELETE] n8n response:', n8nResponse.status, text);
+
+    if (!n8nResponse.ok) {
+      throw new Error(`n8n error: ${n8nResponse.status}`);
+    }
+
+    return NextResponse.json({ success: true, message: 'ลบรายการเรียบร้อยแล้ว' });
+  } catch (error) {
+    console.error('[DELETE] Error:', (error as Error).message);
+    return NextResponse.json({ success: false, message: 'เกิดข้อผิดพลาดในการลบ' }, { status: 500 });
   }
 }

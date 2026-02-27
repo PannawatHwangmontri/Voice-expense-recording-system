@@ -21,3 +21,16 @@ export async function fetchLedger(): Promise<LedgerEntry[]> {
   const json = await res.json();
   return json.data ?? [];
 }
+
+// ลบรายการจาก Google Sheets ผ่าน n8n
+export async function deleteEntry(id: string): Promise<void> {
+  const res = await fetch('/api/expense', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error(json.message ?? `HTTP ${res.status}`);
+  }
+}

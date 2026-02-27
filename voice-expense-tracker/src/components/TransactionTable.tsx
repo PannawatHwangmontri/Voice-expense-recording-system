@@ -3,9 +3,10 @@
 
 import { useState, useMemo } from 'react';
 import { LedgerEntry, FilterType } from '@/types/expense';
-import { RefreshCw, TrendingUp, TrendingDown, Inbox } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Inbox, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { deleteEntry } from '@/lib/api';
 
 interface TransactionTableProps {
     entries: LedgerEntry[];
@@ -48,6 +49,8 @@ function formatTime(dateStr: string) {
 
 export function TransactionTable({ entries, isLoading, onRefresh, isLocal }: TransactionTableProps) {
     const [filter, setFilter] = useState<FilterType>('all');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [confirmId, setConfirmId] = useState<string | null>(null);
 
     const filtered = useMemo(
         () => (filter === 'all' ? entries : entries.filter((e) => e.type === filter)),
@@ -59,6 +62,20 @@ export function TransactionTable({ entries, isLoading, onRefresh, isLocal }: Tra
         { label: 'รายรับ', value: 'income' },
         { label: 'รายจ่าย', value: 'expense' },
     ];
+
+    const handleDelete = async (id: string) => {
+        setDeletingId(id);
+        try {
+            await deleteEntry(id);
+            setConfirmId(null);
+            onRefresh(); // รีโหลดรายการหลังลบสำเร็จ
+        } catch (err) {
+            console.error('Delete failed:', err);
+            alert('เกิดข้อผิดพลาดในการลบ กรุณาลองใหม่');
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     return (
         <div className="glass rounded-3xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
@@ -139,10 +156,13 @@ export function TransactionTable({ entries, isLoading, onRefresh, isLocal }: Tra
                     {filtered.map((entry, idx) => {
                         const catStyle = getCategoryStyle(entry.category);
                         const isIncome = entry.type === 'income';
+                        const isConfirming = confirmId === entry.id;
+                        const isDeleting = deletingId === entry.id;
+
                         return (
                             <div
                                 key={entry.id ?? idx}
-                                className="px-5 py-3.5 flex items-center gap-3 transition-all"
+                                className="px-5 py-3.5 flex items-center gap-3 transition-all group"
                                 style={{
                                     borderBottom: idx < filtered.length - 1 ? '1px solid var(--border)' : 'none',
                                     cursor: 'default',
@@ -182,14 +202,58 @@ export function TransactionTable({ entries, isLoading, onRefresh, isLocal }: Tra
                                     </div>
                                 </div>
 
-                                {/* Amount */}
-                                <div className="text-right flex-shrink-0">
+                                {/* Amount + Delete */}
+                                <div className="flex items-center gap-2 flex-shrink-0">
                                     <p
                                         className="font-bold text-sm"
                                         style={{ color: isIncome ? '#34d399' : '#fb7185' }}
                                     >
                                         {isIncome ? '+' : '-'}฿{entry.amount.toLocaleString('th-TH')}
                                     </p>
+
+                                    {/* Delete button / Confirm */}
+                                    {isConfirming ? (
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => handleDelete(entry.id)}
+                                                disabled={isDeleting}
+                                                className="text-xs px-2 py-1 rounded-lg font-medium transition-all"
+                                                style={{
+                                                    background: 'rgba(244, 63, 94, 0.2)',
+                                                    color: '#fb7185',
+                                                    border: '1px solid rgba(244, 63, 94, 0.4)',
+                                                    opacity: isDeleting ? 0.5 : 1,
+                                                }}
+                                            >
+                                                {isDeleting ? '...' : 'ลบ'}
+                                            </button>
+                                            <button
+                                                onClick={() => setConfirmId(null)}
+                                                disabled={isDeleting}
+                                                className="text-xs px-2 py-1 rounded-lg font-medium transition-all"
+                                                style={{
+                                                    background: 'rgba(148, 163, 184, 0.1)',
+                                                    color: 'var(--text-secondary)',
+                                                    border: '1px solid var(--border)',
+                                                }}
+                                            >
+                                                ยกเลิก
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setConfirmId(entry.id)}
+                                            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                                            style={{
+                                                background: 'rgba(244, 63, 94, 0.1)',
+                                                border: '1px solid rgba(244, 63, 94, 0.2)',
+                                                color: '#fb7185',
+                                            }}
+                                            title="ลบรายการ"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         );
