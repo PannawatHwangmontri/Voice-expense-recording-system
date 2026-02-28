@@ -19,7 +19,13 @@ export async function fetchLedger(): Promise<LedgerEntry[]> {
   const res = await fetch('/api/expense', { cache: 'no-store' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
-  return json.data ?? [];
+  const raw: LedgerEntry[] = json.data ?? [];
+  // Normalize entries: amount → number, type → 'income' | 'expense'
+  return raw.map((e) => ({
+    ...e,
+    amount: Math.abs(Number(e.amount) || 0),
+    type: (String(e.type).trim().toLowerCase() === 'income' ? 'income' : 'expense') as LedgerEntry['type'],
+  }));
 }
 
 // ลบรายการจาก Google Sheets ผ่าน n8n

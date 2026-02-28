@@ -161,7 +161,7 @@ export function TransactionTable({ entries, isLoading, onRefresh, isLocal }: Tra
 
                         return (
                             <div
-                                key={entry.id ?? idx}
+                                key={`${entry.id ?? 'entry'}_${idx}`}
                                 className="px-5 py-3.5 flex items-center gap-3 transition-all group"
                                 style={{
                                     borderBottom: idx < filtered.length - 1 ? '1px solid var(--border)' : 'none',
