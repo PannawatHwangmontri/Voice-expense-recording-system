@@ -2,79 +2,79 @@
 'use client';
 
 import { SummaryData } from '@/types/expense';
+import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 
-interface SummaryBarProps {
-    summary: SummaryData;
+interface Props { summary: SummaryData; }
+
+function fmt(n: number) {
+    return n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-export function SummaryBar({ summary }: SummaryBarProps) {
+export function SummaryBar({ summary }: Props) {
+    const { totalIncome, totalExpense, balance } = summary;
+    const balancePositive = balance >= 0;
+
     const cards = [
         {
             label: 'รายรับ',
-            value: summary.totalIncome,
-            icon: '↑',
-            gradient: 'linear-gradient(135deg, #059669, #10b981)',
-            glow: 'rgba(16, 185, 129, 0.25)',
-            textColor: '#34d399',
-            bg: 'rgba(16, 185, 129, 0.08)',
-            border: 'rgba(16, 185, 129, 0.2)',
+            value: totalIncome,
+            icon: TrendingUp,
+            color: '#10B981',
+            dimColor: 'rgba(16,185,129,0.12)',
+            borderColor: 'rgba(16,185,129,0.2)',
+            glowColor: 'rgba(16,185,129,0.15)',
+            prefix: '+',
         },
         {
             label: 'รายจ่าย',
-            value: summary.totalExpense,
-            icon: '↓',
-            gradient: 'linear-gradient(135deg, #e11d48, #f43f5e)',
-            glow: 'rgba(244, 63, 94, 0.25)',
-            textColor: '#fb7185',
-            bg: 'rgba(244, 63, 94, 0.08)',
-            border: 'rgba(244, 63, 94, 0.2)',
+            value: totalExpense,
+            icon: TrendingDown,
+            color: '#FF6B6B',
+            dimColor: 'rgba(255,107,107,0.12)',
+            borderColor: 'rgba(255,107,107,0.2)',
+            glowColor: 'rgba(255,107,107,0.15)',
+            prefix: '-',
         },
         {
             label: 'คงเหลือ',
-            value: summary.balance,
-            icon: summary.balance >= 0 ? '=' : '!',
-            gradient: summary.balance >= 0
-                ? 'linear-gradient(135deg, #2563eb, #3b82f6)'
-                : 'linear-gradient(135deg, #d97706, #f59e0b)',
-            glow: summary.balance >= 0 ? 'rgba(59, 130, 246, 0.25)' : 'rgba(245, 158, 11, 0.25)',
-            textColor: summary.balance >= 0 ? '#60a5fa' : '#fbbf24',
-            bg: summary.balance >= 0 ? 'rgba(59, 130, 246, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-            border: summary.balance >= 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+            value: Math.abs(balance),
+            icon: Wallet,
+            color: balancePositive ? '#F59E0B' : '#FF6B6B',
+            dimColor: balancePositive ? 'rgba(245,158,11,0.12)' : 'rgba(255,107,107,0.12)',
+            borderColor: balancePositive ? 'rgba(245,158,11,0.25)' : 'rgba(255,107,107,0.25)',
+            glowColor: balancePositive ? 'rgba(245,158,11,0.12)' : 'rgba(255,107,107,0.12)',
+            prefix: balancePositive ? '' : '-',
+            highlight: true,
         },
     ];
 
     return (
         <div className="grid grid-cols-3 gap-3">
-            {cards.map((card) => (
+            {cards.map(({ label, value, icon: Icon, color, dimColor, borderColor, glowColor, prefix, highlight }) => (
                 <div
-                    key={card.label}
-                    className="relative rounded-2xl p-4 overflow-hidden"
+                    key={label}
+                    className="rounded-2xl p-4 flex flex-col gap-2 transition-all"
                     style={{
-                        background: card.bg,
-                        border: `1px solid ${card.border}`,
-                        boxShadow: `0 4px 24px ${card.glow}`,
+                        background: highlight
+                            ? `linear-gradient(135deg, ${dimColor}, rgba(13,19,33,0.95))`
+                            : 'var(--bg-card)',
+                        border: `1px solid ${borderColor}`,
+                        boxShadow: highlight ? `0 4px 24px ${glowColor}` : '0 4px 16px rgba(0,0,0,0.2)',
                     }}
                 >
-                    {/* Background glow blob */}
-                    <div
-                        className="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-30"
-                        style={{ background: card.gradient, filter: 'blur(16px)' }}
-                    />
+                    {/* Icon */}
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                        style={{ background: dimColor }}>
+                        <Icon className="w-3.5 h-3.5" style={{ color }} />
+                    </div>
 
-                    <div className="relative">
-                        {/* Icon badge */}
-                        <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center mb-2 text-xs font-bold text-white"
-                            style={{ background: card.gradient }}
-                        >
-                            {card.icon}
-                        </div>
-
-                        <p className="text-xs mb-1" style={{ color: 'rgba(148, 163, 184, 0.8)' }}>
-                            {card.label}
+                    {/* Amount */}
+                    <div>
+                        <p className="font-bold text-sm leading-tight" style={{ color }}>
+                            {prefix}฿{fmt(value)}
                         </p>
-                        <p className="font-bold text-base leading-tight" style={{ color: card.textColor }}>
-                            ฿{Math.abs(card.value).toLocaleString('th-TH')}
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                            {label}
                         </p>
                     </div>
                 </div>

@@ -25,11 +25,8 @@ export default function HomePage() {
     }
   }, [setLedger, setLoadingLedger]);
 
-  useEffect(() => {
-    loadLedger();
-  }, [loadLedger]);
+  useEffect(() => { loadLedger(); }, [loadLedger]);
 
-  // migration fallback: ถ้า localEntries ว่างแต่มี transactions เก่า
   const computedLocal = useMemo<LedgerEntry[]>(() => {
     if (localEntries.length > 0) return localEntries;
     return transactions.flatMap((tx, txIdx) =>
@@ -51,8 +48,8 @@ export default function HomePage() {
   }, [ledger, computedLocal]);
 
   const summary = useMemo(() => {
-    const totalIncome = displayEntries.filter((e) => e.type === 'income').reduce((s, e) => s + e.amount, 0);
-    const totalExpense = displayEntries.filter((e) => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+    const totalIncome = displayEntries.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+    const totalExpense = displayEntries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
     return { totalIncome, totalExpense, balance: totalIncome - totalExpense };
   }, [displayEntries]);
 
@@ -60,66 +57,87 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen" style={{ background: 'var(--bg-base)', zIndex: 1 }}>
-      {/* Decorative orbs */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #3b82f6, transparent 70%)', filter: 'blur(40px)' }} />
-        <div className="absolute top-1/2 -right-32 w-80 h-80 rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, #8b5cf6, transparent 70%)', filter: 'blur(40px)' }} />
-        <div className="absolute -bottom-20 left-1/3 w-72 h-72 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #10b981, transparent 70%)', filter: 'blur(40px)' }} />
-      </div>
-
+      {/* Content */}
       <div className="relative" style={{ zIndex: 1 }}>
-        {/* Header */}
-        <header className="sticky top-0 z-50 glass border-b"
-          style={{ borderColor: 'var(--border)', backdropFilter: 'blur(24px)' }}>
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+
+        {/* ── Header ── */}
+        <header className="sticky top-0 z-50"
+          style={{
+            background: 'rgba(7, 11, 20, 0.85)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderBottom: '1px solid rgba(245, 158, 11, 0.1)',
+          }}>
+          <div className="max-w-2xl mx-auto px-5 py-3.5 flex items-center justify-between">
+            {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
-                <span className="text-sm">📒</span>
+              <div className="relative w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', boxShadow: '0 0 20px rgba(245,158,11,0.3)' }}>
+                <span className="text-lg">💰</span>
               </div>
               <div>
-                <h1 className="font-bold text-sm gradient-text">ระบบบัญชีรายรับ-รายจ่าย</h1>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Voice Expense Tracker</p>
+                <h1 className="font-extrabold text-sm tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                  Money<span className="gradient-text-gold">Flow</span>
+                </h1>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>AI Expense Tracker</p>
               </div>
             </div>
-            {isLocal && (
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-                style={{
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  color: '#f59e0b',
-                  border: '1px solid rgba(245, 158, 11, 0.3)'
-                }}>
-                📱 ข้อมูลในเครื่อง
-              </span>
-            )}
+
+            {/* Status badges */}
+            <div className="flex items-center gap-2">
+              {isLocal && (
+                <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                  style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.25)' }}>
+                  📱 Local
+                </span>
+              )}
+              <div className="flex items-center gap-1.5 text-xs"
+                style={{ color: 'var(--text-secondary)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" style={{ boxShadow: '0 0 6px #10B981' }} />
+                Live
+              </div>
+            </div>
           </div>
         </header>
 
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5 pb-12">
-          {/* Summary Bar */}
-          <SummaryBar summary={summary} />
+        {/* ── Main ── */}
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5 pb-16">
 
-          {/* Voice Recorder */}
-          <div className="glass rounded-3xl p-6" style={{ border: '1px solid var(--border)' }}>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-2 h-2 rounded-full bg-blue-400" style={{ boxShadow: '0 0 8px #3b82f6' }} />
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                บันทึกด้วยเสียง
-              </h2>
+          {/* Summary Cards */}
+          <div className="animate-fadeInUp" style={{ animationDelay: '0ms' }}>
+            <SummaryBar summary={summary} />
+          </div>
+
+          {/* Voice Recorder Section */}
+          <div className="animate-fadeInUp" style={{ animationDelay: '80ms' }}>
+            <div className="rounded-2xl overflow-hidden"
+              style={{ background: 'var(--bg-card)', border: '1px solid rgba(245,158,11,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+              {/* Section header */}
+              <div className="px-5 py-3.5 flex items-center gap-2.5"
+                style={{ borderBottom: '1px solid var(--border)', background: 'rgba(245,158,11,0.04)' }}>
+                <div className="w-1.5 h-5 rounded-full" style={{ background: 'linear-gradient(to bottom, #F59E0B, #D97706)' }} />
+                <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>บันทึกด้วยเสียง</h2>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  AI Powered
+                </span>
+              </div>
+              <div className="p-5">
+                <VoiceRecorder onSaved={loadLedger} />
+              </div>
             </div>
-            <VoiceRecorder onSaved={loadLedger} />
           </div>
 
           {/* Transaction Table */}
-          <TransactionTable
-            entries={displayEntries}
-            isLoading={isLoadingLedger}
-            onRefresh={loadLedger}
-            isLocal={isLocal}
-          />
+          <div className="animate-fadeInUp" style={{ animationDelay: '160ms' }}>
+            <TransactionTable
+              entries={displayEntries}
+              isLoading={isLoadingLedger}
+              onRefresh={loadLedger}
+              isLocal={isLocal}
+            />
+          </div>
+
         </main>
       </div>
     </div>

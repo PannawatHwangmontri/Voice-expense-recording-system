@@ -1,36 +1,43 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Noto_Sans_Thai } from 'next/font/google';
+import { Plus_Jakarta_Sans, Noto_Sans_Thai } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  weight: ['300', '400', '500', '600', '700', '800'],
+});
+
 const notoSansThai = Noto_Sans_Thai({
   subsets: ['thai'],
   variable: '--font-thai',
-  weight: ['400', '500', '700'],
+  weight: ['300', '400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: 'ระบบบัญชีรายรับ-รายจ่าย 📒',
-  description: 'บันทึกรายรับ-รายจ่ายด้วยเสียง ส่งข้อมูลผ่าน n8n อัตโนมัติ',
+  title: 'MoneyFlow — ระบบบัญชีรายรับ-รายจ่าย',
+  description: 'บันทึกรายรับ-รายจ่ายด้วยเสียง อัจฉริยะด้วย AI',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="th" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${notoSansThai.variable}
-                    font-sans bg-slate-50 dark:bg-gray-950
-                    text-gray-900 dark:text-gray-100
-                    min-h-screen transition-colors duration-300`}
-      >
+      <body className={`${plusJakarta.variable} ${notoSansThai.variable}`}>
         {children}
         <Toaster
           position="top-center"
           toastOptions={{
-            duration: 3000,
-            style: { background: '#1e293b', color: '#f1f5f9', fontFamily: 'var(--font-thai)' },
+            duration: 3500,
+            style: {
+              background: '#0D1321',
+              color: '#F0F4FF',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              fontFamily: 'var(--font-thai), var(--font-jakarta), sans-serif',
+              borderRadius: '12px',
+              fontSize: '14px',
+            },
           }}
         />
       </body>

@@ -2,59 +2,59 @@
 'use client';
 
 import { Status } from '@/types/expense';
-import { clsx } from 'clsx';
 
-interface StatusBadgeProps {
-  status: Status;
-}
-
-const statusConfig = {
-  idle: { 
-    label: 'พร้อมใช้งาน', 
-    className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-    pulse: false
+const CONFIG: Record<Status, { label: string; color: string; bg: string; border: string; dot?: string; pulse?: boolean }> = {
+  idle: {
+    label: 'พร้อมใช้งาน', color: 'var(--text-secondary)',
+    bg: 'rgba(255,255,255,0.04)', border: 'var(--border)',
   },
-  listening: { 
-    label: '🎙️ กำลังฟัง...', 
-    className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-    pulse: true
+  listening: {
+    label: '🎙 กำลังฟัง…', color: '#FF6B6B',
+    bg: 'rgba(255,107,107,0.1)', border: 'rgba(255,107,107,0.3)',
+    dot: '#FF6B6B', pulse: true,
   },
-  processing: { 
-    label: '⚙️ กำลังประมวลผล...', 
-    className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-    pulse: true
+  processing: {
+    label: '⚡ ประมวลผล…', color: '#F59E0B',
+    bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)',
+    dot: '#F59E0B', pulse: true,
   },
-  confirming: { 
-    label: '❓ รอการยืนยัน', 
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-    pulse: false
+  confirming: {
+    label: '📋 ยืนยันรายการ', color: '#6366F1',
+    bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.3)',
+    dot: '#6366F1',
   },
-  saved: { 
-    label: '✅ บันทึกแล้ว', 
-    className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-    pulse: false
+  saved: {
+    label: '✅ บันทึกแล้ว', color: '#10B981',
+    bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)',
+    dot: '#10B981',
   },
-  error: { 
-    label: '❌ เกิดข้อผิดพลาด', 
-    className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-    pulse: false
+  error: {
+    label: '❌ เกิดข้อผิดพลาด', color: '#FF6B6B',
+    bg: 'rgba(255,107,107,0.1)', border: 'rgba(255,107,107,0.3)',
+    dot: '#FF6B6B',
   },
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-  const config = statusConfig[status];
-
+export function StatusBadge({ status }: { status: Status }) {
+  const cfg = CONFIG[status] ?? CONFIG.idle;
   return (
-    <div className="flex items-center justify-center">
-      <span
-        className={clsx(
-          'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium',
-          config.className,
-          config.pulse && 'animate-pulse'
-        )}
+    <div className="flex justify-center">
+      <div
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all"
+        style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}
       >
-        {config.label}
-      </span>
+        {cfg.dot && (
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{
+              background: cfg.dot,
+              boxShadow: `0 0 6px ${cfg.dot}`,
+              animation: cfg.pulse ? 'pulse 1.5s ease-in-out infinite' : 'none',
+            }}
+          />
+        )}
+        {cfg.label}
+      </div>
     </div>
   );
 }
