@@ -1,136 +1,36 @@
-# MoneyFlow — ระบบบัญชีรายรับ-รายจ่ายด้วยเสียง และแชท AI
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-> บันทึกรายรับ-รายจ่ายด้วยเสียงหรือพิมพ์ข้อความ ประมวลผลอัตโนมัติด้วย Gemini AI ผ่าน n8n และบันทึกลง Google Sheets
+## Getting Started
 
-![MoneyFlow Screenshot](voice-expense-tracker/public/screenshot.png)
-
----
-
-## ✨ Features
-
-- 🎙 **Voice Input** — พูดบันทึกค่าใช้จ่ายได้ทันที (Chrome / Edge)
-- 💬 **Chat Input** — พิมพ์ข้อความแทนเสียงได้
-- 🤖 **AI Processing** — Gemini AI แปลงข้อความเป็นรายการรายรับ-รายจ่ายอัตโนมัติ
-- 📊 **Google Sheets** — บันทึกข้อมูลลง Google Sheets แบบ real-time
-- 🗑 **Delete** — ลบรายการผ่านหน้าเว็บได้
-- 📱 **Responsive** — รองรับมือถือและ Desktop
-
----
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14, TypeScript, Tailwind CSS |
-| Backend/Automation | n8n (Cloud) |
-| AI | Google Gemini 2.5 Flash |
-| Database | Google Sheets |
-| Font | Plus Jakarta Sans |
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone & Install
-
-```bash
-git clone https://github.com/PannawatHwangmontri/Voice-expense-recording-system.git
-cd Voice-expense-recording-system/voice-expense-tracker
-npm install
-```
-
-### 2. สร้างไฟล์ `.env.local` ⚠️
-
-> **สำคัญ:** ต้องสร้างไฟล์นี้ก่อน ไม่งั้นระบบจะไม่สามารถเชื่อมต่อกับ n8n ได้
-
-สร้างไฟล์ [`voice-expense-tracker/.env.local`](voice-expense-tracker/.env.local) แล้วใส่ค่าดังนี้:
-
-```env
-# n8n Webhook URLs
-N8N_WEBHOOK_URL=https://YOUR_N8N_INSTANCE/webhook/voice-expense
-N8N_GET_WEBHOOK_URL=https://YOUR_N8N_INSTANCE/webhook/voice-expense-list
-N8N_DELETE_WEBHOOK_URL=https://YOUR_N8N_INSTANCE/webhook/voice-expense-delete
-```
-
-> แทน `YOUR_N8N_INSTANCE` ด้วย domain n8n ของคุณ  
-> ตัวอย่าง: `https://yourname.app.n8n.cloud`
-
-### 3. Run Development Server
+First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-เปิดที่ [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
----
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## 📁 Project Structure
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-```
-voice-expense-tracker/
-├── src/
-│   ├── app/
-│   │   ├── api/expense/route.ts   # API routes → n8n proxy
-│   │   ├── page.tsx               # Main page
-│   │   ├── layout.tsx             # Root layout + fonts
-│   │   └── globals.css            # Global styles + design tokens
-│   ├── components/
-│   │   ├── VoiceRecorder.tsx      # Voice + Chat input
-│   │   ├── TransactionTable.tsx   # รายการธุรกรรม + ลบ
-│   │   ├── SummaryBar.tsx         # สรุปรายรับ/รายจ่าย/คงเหลือ
-│   │   ├── ExpenseForm.tsx        # ฟอร์มยืนยันรายการ
-│   │   └── StatusBadge.tsx        # สถานะการทำงาน
-│   ├── hooks/
-│   │   ├── useVoiceRecognition.ts # Web Speech API hook
-│   │   └── useExpenseStore.ts     # Zustand state store
-│   ├── lib/
-│   │   └── api.ts                 # API functions
-│   └── types/
-│       └── expense.ts             # TypeScript interfaces
-├── .env.local                     # ⚠️ ต้องสร้างเอง (ดูด้านบน)
-└── package.json
-```
+## Learn More
 
----
+To learn more about Next.js, take a look at the following resources:
 
-## 🔗 n8n Workflow
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-ระบบใช้ n8n 3 workflows:
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-| Webhook Path | หน้าที่ |
-|---|---|
-| `/webhook/voice-expense` | POST — รับข้อความ + Gemini AI → บันทึก Google Sheets |
-| `/webhook/voice-expense-list` | GET — ดึงรายการทั้งหมดจาก Google Sheets |
-| `/webhook/voice-expense-delete` | POST — ลบรายการตาม Timestamp |
+## Deploy on Vercel
 
----
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## 📝 ตัวอย่างการใช้งาน
-
-```
-"กินก๋วยเตี๋ยว 50 กาแฟ 40"
-→ บันทึก: อาหาร ฿50, เครื่องดื่ม ฿40
-
-"ได้เงินเดือน 15000"
-→ บันทึก: รายรับ ฿15,000
-
-"ค่าไฟเดือนนี้ 800 บาท"
-→ บันทึก: สาธารณูปโภค ฿800
-```
-
----
-
-## ⚙️ Environment Variables
-
-| Variable | Description | Required |
-|---|---|---|
-| `N8N_WEBHOOK_URL` | n8n webhook สำหรับบันทึกข้อมูล (POST) | ✅ |
-| `N8N_GET_WEBHOOK_URL` | n8n webhook สำหรับดึงข้อมูล (GET/POST) | ✅ |
-| `N8N_DELETE_WEBHOOK_URL` | n8n webhook สำหรับลบข้อมูล (POST) | ✅ |
-
----
-
-## 📄 License
-
-MIT License © 2026 Pannawat Hwangmontri
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
